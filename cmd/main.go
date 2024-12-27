@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/signintech/gopdf"
-	"github.com/tucnak/telebot"
+	"gopkg.in/telebot.v4"
 	"log"
 	"time"
 )
@@ -12,7 +12,7 @@ var userPhotos = make(map[int64][]string)
 
 func main() {
 	pref := telebot.Settings{
-		Token: "TELEGRAM_TOKEN",
+		Token: "7662946517:AAEnRCVDN7t6UK9VxGxk_SSDNswvP2vfExw",
 		Poller: &telebot.LongPoller{
 			Timeout: 10 * time.Second,
 		},
@@ -23,15 +23,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	bot.Handle("/start", func(m *telebot.Message) {
-		_, err := bot.Send(m.Chat, "надо: 1. отправить фотографии 2. написать название")
-
-		if err != nil {
-			log.Fatal(err)
-		}
+	bot.Handle("/start", func(c telebot.Context) error {
+		return c.Send("надо: 1. отправить фотографии 2. написать название")
 	})
 
-	bot.Handle(telebot.OnPhoto, func(m *telebot.Message) {
+	bot.Handle(telebot.OnPhoto, func(c telebot.Context) error {
+		m := c.Message()
 		photos := m.Photo
 
 		userPhotos[m.Chat.ID] = append(userPhotos[m.Chat.ID], photos.FileID)
@@ -42,9 +39,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return nil
 	})
 
-	bot.Handle(telebot.OnText, func(m *telebot.Message) {
+	bot.Handle(telebot.OnText, func(c telebot.Context) error {
+		m := c.Message()
 		photos := userPhotos[m.Chat.ID]
 
 		photoPaths := make([]string, len(photos))
@@ -62,16 +61,12 @@ func main() {
 		}
 
 		fmt.Println(outputPath)
-		_, err = bot.Send(m.Chat, telebot.Document{
-			File: telebot.File{
-				FilePath: outputPath,
-			},
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
 
 		delete(userPhotos, m.Chat.ID)
+
+		return c.Send(telebot.Document{
+			File: telebot.FromDisk(outputPath),
+		})
 	})
 
 	bot.Start()
