@@ -64,8 +64,9 @@ func main() {
 
 		delete(userPhotos, m.Chat.ID)
 
-		return c.Send(telebot.Document{
-			File: telebot.FromDisk(outputPath),
+		return c.Send(&telebot.Document{
+			File:     telebot.FromDisk(outputPath),
+			FileName: fmt.Sprintf("%s.pdf", m.Text),
 		})
 	})
 
