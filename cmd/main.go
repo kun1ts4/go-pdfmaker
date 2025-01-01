@@ -2,17 +2,26 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/signintech/gopdf"
 	"gopkg.in/telebot.v4"
 	"log"
+	"os"
 	"time"
 )
 
 var userPhotos = make(map[int64][]string)
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("ошибка загрузки .env файла")
+	}
+
+	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+
 	pref := telebot.Settings{
-		Token: "7662946517:AAEnRCVDN7t6UK9VxGxk_SSDNswvP2vfExw",
+		Token: botToken,
 		Poller: &telebot.LongPoller{
 			Timeout: 10 * time.Second,
 		},
@@ -33,7 +42,7 @@ func main() {
 
 		userPhotos[m.Chat.ID] = append(userPhotos[m.Chat.ID], photos.FileID)
 
-		filePath := fmt.Sprintf("./images/%s.jpg", photos.FileID)
+		filePath := fmt.Sprintf("./pics/%s.jpg", photos.FileID)
 
 		err := bot.Download(&photos.File, filePath)
 		if err != nil {
@@ -48,7 +57,7 @@ func main() {
 
 		photoPaths := make([]string, len(photos))
 		for i, photo := range photos {
-			photoPaths[i] = fmt.Sprintf("./images/%s.jpg", photo)
+			photoPaths[i] = fmt.Sprintf("./pics/%s.jpg", photo)
 		}
 		userPhotos[m.Chat.ID] = nil
 
